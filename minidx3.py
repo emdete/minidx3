@@ -1,6 +1,5 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 import array
-import hid
 import time
 
 
@@ -39,10 +38,10 @@ def recv_packet(dev):
 	data=dev.read(256)
 	min_size=4
 	if len(data)<min_size:
-		raise Exception("Packet too small (is "+str(len(data))+" but min size is "+str(min_size)+").")
+		raise Exception("Packet too small (is {} but min size is {}).".format(len(data), min_size, ))
 	header=data[0]
 	if header!=0x02:
-		raise Exception("Invalid header (got "+str(hex(header))+" expected 0x02).")
+		raise Exception("Invalid header (got {} expected 0x02).".format(hex(header), ))
 	size=(data[1]<<8)+data[2]
 	while True:
 		max_size=len(data)-min_size
@@ -53,12 +52,12 @@ def recv_packet(dev):
 	checksum=data[3+size]
 	checksum_calc=pack(payload)[-1]
 	if pack(payload)[-1]!=checksum:
-		raise Exception("Invalid checksum (got "+str(hex(checksum))+" expected "+str(hex(checksum_calc))+").")
+		raise Exception("Invalid checksum (got {} expected {}).".format(hex(checksum), hex(checksum_calc), ))
 	return payload
 
 def parse_date(buf):
 	if len(buf)!=15:
-		raise Exception("Expected a date string size of 15 bytes got "+str(date_size)+" bytes.")
+		raise Exception("Expected a date string size of 15 bytes got {} bytes.".format(date_size, ))
 
 	date={}
 	date['year']=array_to_str(buf[:4])
@@ -76,19 +75,19 @@ def login(dev,pin):
 	buf=recv_packet(dev)
 
 	if len(buf)<2:
-		raise Exception("Invalid response size (expected at least 2 bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Invalid response size (expected at least 2 bytes got {} bytes).".format(len(buf), ))
 
 	rtype=chr(buf[0])
 	buf=buf[1:]
 	if rtype!=ptype:
-		raise Exception("Invalid response type (expected '"+ptype+"' got '"+rtype+"').")
+		raise Exception("Invalid response type (expected '{}' got '{}').".format(ptype, rtype, ))
 
 	code=chr(buf[0])
 	buf=buf[1:]
 	if code!='0' and code!='1':
-		raise Exception("Received error code ("+code+").")
+		raise Exception("Received error code ({}).".format(code, ))
 
-	return code is '0'
+	return code == '0'
 
 def logout(dev):
 	ptype='O'
@@ -96,17 +95,17 @@ def logout(dev):
 	buf=recv_packet(dev)
 
 	if len(buf)<2:
-		raise Exception("Invalid response size (expected at least 2 bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Invalid response size (expected at least 2 bytes got {} bytes).".format(len(buf), ))
 
 	rtype=chr(buf[0])
 	buf=buf[1:]
 	if rtype!=ptype:
-		raise Exception("Invalid response type (expected '"+ptype+"' got '"+rtype+"').")
+		raise Exception("Invalid response type (expected '{}' got '{}').".format(ptype, rtype, ))
 
 	code=chr(buf[0])
 	buf=buf[1:]
 	if code!='0' and code!='1':
-		raise Exception("Received error code ("+code+").")
+		raise Exception("Received error code ({}).".format(code, ))
 
 
 def get_num(dev):
@@ -115,20 +114,20 @@ def get_num(dev):
 	buf=recv_packet(dev)
 
 	if len(buf)<2:
-		raise Exception("Invalid response size (expected at least 2 bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Invalid response size (expected at least 2 bytes got {} bytes).".format(len(buf), ))
 
 	rtype=chr(buf[0])
 	buf=buf[1:]
 	if rtype!=ptype:
-		raise Exception("Invalid response type (expected '"+ptype+"' got '"+rtype+"').")
+		raise Exception("Invalid response type (expected '{}' got '{}').".format(ptype, rtype, ))
 
 	code=chr(buf[0])
 	buf=buf[1:]
 	if code!='0':
-		raise Exception("Received error code ("+code+").")
+		raise Exception("Received error code ({}).".format(code, ))
 
 	if len(buf)!=2:
-		raise Exception("Malformed packet (expected 2 bytes got "+len(buf)+" bytes).")
+		raise Exception("Malformed packet (expected 2 bytes got {} bytes).".format(len(buf), ))
 
 	return (buf[0]<<8)+buf[1]
 
@@ -141,31 +140,31 @@ def get_entry(dev,index):
 	buf=recv_packet(dev)
 
 	if len(buf)<2:
-		raise Exception("Invalid response size (expected at least 2 bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Invalid response size (expected at least 2 bytes got {} bytes).".format(len(buf), ))
 
 	rtype=chr(buf[0])
 	buf=buf[1:]
 	if rtype!=ptype:
-		raise Exception("Invalid response type (expected '"+ptype+"' got '"+rtype+"').")
+		raise Exception("Invalid response type (expected '{}' got '{}').".format(ptype, rtype, ))
 
 	code=chr(buf[0])
 	buf=buf[1:]
 	if code!='0':
-		raise Exception("Received error code ("+code+").")
+		raise Exception("Received error code ({}).".format(code, ))
 
 	if len(buf)<1:
-		raise Exception("Malformed packet (expected at least 1 byte got 0 bytes).")
+		raise Exception("Malformed packet (expected at least 1 byte got 0 bytes).".format())
 
 	date_size=buf[0]
 	buf=buf[1:]
 
 	if len(buf)<date_size:
-		raise Exception("Malformed packet (expected at least "+str(date_size)+" bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Malformed packet (expected at least {} bytes got {} bytes).".format(date_size, len(buf), ))
 	date=buf[:date_size]
 	buf=buf[date_size:]
 
 	if len(buf)<3:
-		raise Exception("Malformed packet (expected at least 3 bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Malformed packet (expected at least 3 bytes got {} bytes).".format(len(buf), ))
 	track_sizes=buf[:3]
 	buf=buf[3:]
 
@@ -173,7 +172,7 @@ def get_entry(dev,index):
 	for ii in range(3):
 		track_size=track_sizes[ii]
 		if len(buf)<track_size:
-			raise Exception("Malformed packet (expected at least "+str(track_size)+" bytes got "+str(len(buf))+" bytes).")
+			raise Exception("Malformed packet (expected at least {} bytes got {} bytes).".format(track_size, len(buf), ))
 		track=array_to_str(buf[:track_size])
 		buf=buf[track_size:]
 		tracks.append(track)
@@ -188,17 +187,17 @@ def erase(dev):
 	buf=recv_packet(dev)
 
 	if len(buf)<2:
-		raise Exception("Invalid response size (expected at least 2 bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Invalid response size (expected at least 2 bytes got {} bytes).".format(len(buf), ))
 
 	rtype=chr(buf[0])
 	buf=buf[1:]
 	if rtype!=ptype:
-		raise Exception("Invalid response type (expected '"+ptype+"' got '"+rtype+"').")
+		raise Exception("Invalid response type (expected '{}' got '{}').".format(ptype, rtype, ))
 
 	code=chr(buf[0])
 	buf=buf[1:]
 	if code!='0':
-		raise Exception("Received error code ("+code+").")
+		raise Exception("Received error code ({}).".format(code, ))
 
 def get_date(dev):
 	ptype='T'
@@ -206,17 +205,17 @@ def get_date(dev):
 	buf=recv_packet(dev)
 
 	if len(buf)<2:
-		raise Exception("Invalid response size (expected at least 2 bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Invalid response size (expected at least 2 bytes got {} bytes).".format(len(buf), ))
 
 	rtype=chr(buf[0])
 	buf=buf[1:]
 	if rtype!=ptype:
-		raise Exception("Invalid response type (expected '"+ptype+"' got '"+rtype+"').")
+		raise Exception("Invalid response type (expected '{}' got '{}').".format(ptype, rtype, ))
 
 	code=chr(buf[0])
 	buf=buf[1:]
 	if code!='0':
-		raise Exception("Received error code ("+code+").")
+		raise Exception("Received error code ({}).".format(code, ))
 
 	return parse_date(buf)
 
@@ -226,12 +225,12 @@ def get_product_version(dev):
 	buf=recv_packet(dev)
 
 	if len(buf)<2:
-		raise Exception("Invalid response size (expected at least 2 bytes got "+str(len(buf))+" bytes).")
+		raise Exception("Invalid response size (expected at least 2 bytes got {} bytes).".format(len(buf), ))
 
 	rtype=chr(buf[0])
 	buf=buf[1:]
 	if rtype!=ptype:
-		raise Exception("Invalid response type (expected '"+ptype+"' got '"+rtype+"').")
+		raise Exception("Invalid response type (expected '{}' got '{}').".format(ptype, rtype, ))
 
 	buf=array_to_str(buf)
 	while len(buf)>0:
@@ -249,8 +248,18 @@ def get_register(dev,register):
 	print(buf.index(0))
 
 if __name__=="__main__":
-	h=hid.device()
-	h.open(0x0801,0x0083)
+	if False:
+		import hid
+		h=hid.device()
+		h.open(0x0801,0x0083)
+	else:
+		from serial import Serial
+		h = Serial(port='/dev/ttyUSB0', baudrate=int(19200), )
+		h.rtscts = False
+		h.xonxoff = False
+		h.timeout = 1
+		h.writeTimeout = 1
+		send_packet = lambda dev,payload: dev.write(pack(payload))
 	print('opened')
 
 	if not login(h,"0000"):
