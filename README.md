@@ -1,23 +1,26 @@
 # minidx3
 
-Bought a minidx3 card reader. Pretty nice reader - cheap, tiny, and battery powered.
+Bought a minidx3 card reader. Pretty nice reader - cheap, tiny, and battery
+powered.
 
-Sadly, the software is Windows only and made by a sketchy company based in China...
-I refuse to run it on anything but a VM with no network...as it opens network connections...for seemingly unknwon reasons...
-I'm also a pretty paranoid person...so it might be nothing...
+Sadly, the software is Windows only and made by a sketchy company based in
+China. I refuse to run it on anything but a VM with no network...as it opens
+network connections...for seemingly unknwon reasons. I'm also a pretty paranoid
+person, so it might be nothing.
 
-So I reversed engineered the USB HID protocol it uses and created a partially implemented python library that does the following:
+So I reversed engineered the USB Serial protocol it uses and created a partially
+implemented Python library that does the following:
 
-	Logs into the device.
-	Logs out of the device.
-	Get the number of entries from the device.
-	Get an entry from the device.
-	Get product version from the device.
-	Get firmware date from the device.
-	Get any sort of register from the device (maybe? last thing worked on...)
+- Login to the device.
+- Set the date on the device (without it does nothing).
+- Get the number of entries from the device.
+- Get an entry from the device.
+- Get product version from the device.
+- Get firmware date from the device.
+- Get any sort of register from the device.
+- Logout of the device.
 
-This hasn't been REALLY looked at in a LONG time...over a year...so this is more for developers that are looking for a place to start.
+This is a complete rewrite of the original software written by mrmoss. I used
+the [manual](minidx3_user_manual.pdf) which describes the protocol a bit (so no
+real reverse engineering necesary).
 
-Uses the hid python library.
-
-I'd be happy to answer questions...this was more for fun than anything else.
