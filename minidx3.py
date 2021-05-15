@@ -14,7 +14,7 @@ def check_crc(buf):
 def size(buf):
 	return [len(buf) & 0xff00 >> 8, len(buf) & 0x00ff, ]
 
-def send_receive(device, buf, size=3):
+def send_receive(device, buf, size=5):
 	buf.insert(0, 2)
 	buf.append(13)
 	buf = bytes(buf)
@@ -23,8 +23,8 @@ def send_receive(device, buf, size=3):
 	if debug: sleep(.3)
 	buf = device.read(size)
 	if debug: print(repr(buf))
-	if buf[0] != 2 or buf[-1] != 13:
-		raise Exception('Protocol error in result')
+	if not buf or buf[0] != 2 or buf[-1] != 13:
+		raise Exception('Protocol error in result "{}"'.format(buf))
 	return buf
 
 # L - login
@@ -46,13 +46,18 @@ def set_password(device, pin):
 
 # B - get register
 def get_register(device, no):
-	buf = [ord('B'), 0, no, ]
+	no = [ord(c) for c in '{:02x}'.format(no)]
+	#no = [no >> 8, no & 0xff, ]
+	buf = [ord('B'), ] + no
 	buf = send_receive(device, buf, 7)
 	if buf[1] == ord('A'):
 		check_crc(buf)
 		return int(buf[2:-3].decode(), 16)
 
 # C - set register
+def set_register(device, no, value):
+	no = [ord(c) for c in '{:02x}'.format(no)]
+	buf = [ord('C'), ]
 
 # F - get product version
 def get_product_version(device):
@@ -90,10 +95,12 @@ def get_number_of_records(device):
 
 # G - get record
 def get_record(device, no):
-	buf = [ord('G'), 0, no, ]
+	no = [ord(c) for c in '{:04x}'.format(no)]
+	#no = [no >> 8, no & 0xff, ]
+	buf = [ord('G'), ] + no
 	buf = send_receive(device, buf, 200)
 	if buf[1] == ord('A'):
-		return buf[5:-1].decode().split('?')
+		return buf[2:-1] # .decode().split('?')
 
 # E - erase records
 def erase_records(device):
@@ -103,24 +110,20 @@ def erase_records(device):
 with Serial(port='/dev/ttyUSB0', baudrate=int(19200), ) as device:
 	device.rtscts = False
 	device.xonxoff = False
-	if True:
-		device.timeout = 1
-		print('login', login(device), )
+	device.timeout = 1
+	print('login', login(device), )
+	if debug:
 		print('get_product_version', get_product_version(device), )
-		for idx in range(0x7f):
+	if debug:
+		for idx in range(256):
 			print('get_register', idx, get_register(device, idx), )
-		print('set_date', set_date(device), )
+	print('set_date', set_date(device), )
+	if debug:
 		print('get_date', get_date(device), )
-		no = get_number_of_records(device)
-		print('get_number_of_records', no, )
-		for idx in range(no):
-			print('get_record', idx, get_record(device, idx), )
-		print('erase_records', erase_records(device), )
-		print('logout', logout(device), )
-	else:
-		print('login', login(device), )
-		while True:
-			buf = device.read(200)
-			print(buf)
-		print('logout', logout(device), )
+	no = get_number_of_records(device)
+	print('get_number_of_records', no, )
+	for idx in range(no):
+		print('get_record', idx, get_record(device, idx), )
+	#print('erase_records', erase_records(device), )
+	print('logout', logout(device), )
 
