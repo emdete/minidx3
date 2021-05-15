@@ -29,30 +29,25 @@ def str_to_array(text):
 def pack(payload):
 	if type(payload) is str:
 		payload = str_to_array(payload)
-	size = [len(payload)&0xff00,len(payload)&0x00ff]
-	return [0x02]+size+payload+[crc(size+payload)]
+	size = [len(payload) & 0xff00 >> 8, len(payload) & 0x00ff, ]
+	return [0x02, ] + size + payload + [crc(size + payload), ]
 
 def send_packet(dev,payload):
 	dev.send_feature_report(pack(payload))
 
 def recv_packet(dev):
-	data = dev.read(256)
-	min_size = 4
-	if len(data)<min_size:
-		raise Exception("Packet too small (is {} but min size is {}).".format(len(data), min_size, ))
+	data = dev.read(4)
+	if len(data) < 4:
+		raise Exception("Packet too small (is {} but min size is {}).".format(len(data), 4, ))
 	header = data[0]
 	if header != 0x02:
 		raise Exception("Invalid header (got {} expected 0x02).".format(hex(header), ))
-	size = (data[1]<<8)+data[2]
-	while True:
-		max_size = len(data)-min_size
-		if size <= max_size:
-			break
-		data += dev.read(256)
+	size = data[1] << 8 + data[2]
+	data += dev.read(size)
 	payload = data[3:3+size]
-	checksum = data[3+size]
-	checksum_calc = pack(payload)[-1]
-	if pack(payload)[-1] != checksum:
+	checksum = data[-1]
+	checksum_calc = crc(data[1:3] + payload)
+	if checksum_calc != checksum:
 		raise Exception("Invalid checksum (got {} expected {}).".format(hex(checksum), hex(checksum_calc), ))
 	return payload
 
@@ -70,7 +65,7 @@ def parse_date(buf):
 
 def login(dev,pin):
 	ptype = 'L'
-	send_packet(dev,ptype+pin)
+	send_packet(dev, ptype + pin)
 	buf = recv_packet(dev)
 	if len(buf)<2:
 		raise Exception("Invalid response size (expected at least 2 bytes got {} bytes).".format(len(buf), ))
@@ -78,8 +73,7 @@ def login(dev,pin):
 	buf = buf[1:]
 	if rtype != ptype:
 		raise Exception("Invalid response type (expected '{}' got '{}').".format(ptype, rtype, ))
-	code = chr(buf[0])
-	buf = buf[1:]
+	code = chr(buf[1])
 	if code != '0' and code != '1':
 		raise Exception("Received error code ({}).".format(code, ))
 	return code == '0'
@@ -219,12 +213,12 @@ if __name__ == "__main__":
 		device.open(0x0801,0x0083)
 	else:
 		from serial import Serial
-		device = Serial(port = '/dev/ttyUSB0', baudrate = int(19200), )
+		device = Serial(port = '/dev/ttyUSB0', baudrate = int(9600), )
 		device.rtscts = False
 		device.xonxoff = False
 		device.timeout = 1
 		device.writeTimeout = 1
-		send_packet = lambda dev,payload: dev.write(pack(payload))
+		send_packet = lambda dev, payload: dev.write(pack(payload))
 	print('opened')
 	if not login(device,"0000"):
 		print('Failed to login.')
