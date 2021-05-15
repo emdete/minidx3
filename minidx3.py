@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+from time import sleep
 from serial import Serial
 
 debug = False
@@ -20,6 +21,7 @@ def send_receive(device, buf, size=3):
 	device.write(buf)
 	buf = device.read(size)
 	if debug: print(repr(buf))
+	sleep(.3)
 	if buf[0] != 2 or buf[-1] != 13:
 		raise Exception('Protocol error in result')
 	return buf
@@ -72,13 +74,14 @@ def get_number_of_records(device):
 def get_record(device, no=0):
 	num = [ord('G'), no>>8, no&0xff, ]
 	buf = send_receive(device, num, 200)
+	print(buf)
 	if buf[1] == ord('A'):
 		return buf[5:-1].decode().split('?')
 
 # E - erase records
 def erase_records(device):
 	num = [ord('E'), ]
-	return send_receive(device, num)
+	return send_receive(device, num)[1] == ord('A')
 
 with Serial(port='/dev/ttyUSB0', baudrate=int(19200), ) as device:
 	device.rtscts = False
@@ -88,8 +91,10 @@ with Serial(port='/dev/ttyUSB0', baudrate=int(19200), ) as device:
 	print('get_product_version', get_product_version(device), )
 	print('set_date', set_date(device), )
 	print('get_date', get_date(device), )
-	print('get_number_of_records', get_number_of_records(device), )
-	for idx in range(4):
-		print('get_record', get_record(device, idx), )
+	no = get_number_of_records(device)
+	print('get_number_of_records', no, )
+	for idx in range(no):
+		print('get_record', get_record(device, idx+1), )
+	print('erase_records', erase_records(device), )
 	print('logout', logout(device), )
 
