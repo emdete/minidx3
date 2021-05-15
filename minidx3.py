@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
+' module to drive a MiniDX3 '
 from time import sleep
 from datetime import datetime
 from serial import Serial
 
-debug = False
+DEBUG = False
 
-class MiniDX3(Serial):
+class MiniDX3(Serial): # pylint: disable=too-many-ancestors
+	' Class MiniDX3 to open the serial device to the MiniDX3 and talk to it '
+
 	def __init__(self, filename, pin='0000'):
-		super(MiniDX3, self).__init__(port=filename, baudrate=19200, )
+		super().__init__(port=filename, baudrate=19200, )
 		self.rtscts = False
 		self.xonxoff = False
 		self.timeout = 1
@@ -18,7 +21,7 @@ class MiniDX3(Serial):
 		crc = 0
 		for b in buf[2:-3]:
 			crc ^= b
-		# TODO
+		# TODO check crc
 		# print('---', int(buf[-3:-1].decode(), 16), crc, )
 		return crc
 
@@ -30,11 +33,11 @@ class MiniDX3(Serial):
 		buf.insert(0, 2)
 		buf.append(13)
 		buf = bytes(buf)
-		if debug: print(repr(buf))
+		if DEBUG: print(repr(buf))
 		self.write(buf)
-		if debug: sleep(.3)
+		if DEBUG: sleep(.3)
 		buf = self.read(size)
-		if debug: print(repr(buf))
+		if DEBUG: print(repr(buf))
 		if not buf or buf[0] != 2 or buf[-1] != 13:
 			raise Exception('Protocol error in result "{}"'.format(buf))
 		return buf
@@ -70,7 +73,7 @@ class MiniDX3(Serial):
 	def set_register(self, no, value):
 		no = [ord(c) for c in '{:02x}'.format(no)]
 		buf = [ord('C'), ]
-		# TODO
+		# TODO implement
 
 	# F - get product version
 	def get_product_version(self):
@@ -119,13 +122,13 @@ class MiniDX3(Serial):
 
 if __name__ == '__main__':
 	with MiniDX3('/dev/ttyUSB0', '0000') as device:
-		if debug:
+		if DEBUG:
 			print('get_product_version', device.get_product_version(), )
-		if debug:
+		if DEBUG:
 			for idx in range(256):
 				print('get_register', idx, device.get_register(idx), )
 		print('set_date', device.set_date(), )
-		if debug:
+		if DEBUG:
 			print('get_date', device.get_date(), )
 		no = device.get_number_of_records()
 		print('get_number_of_records', no, )
