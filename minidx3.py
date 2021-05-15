@@ -38,14 +38,21 @@ def logout(device):
 	return send_receive(device, num)[1] == ord('A')
 
 # P - set password
+def set_password(device, pin):
+	pin = [ord(c) for c in pin]
+	pin.insert(0, ord('P'))
+	return send_receive(device, pin)[1] == ord('A')
+
 # B - get register
+
 # C - set register
+
 # F - get product version
 def get_product_version(device):
 	buf = [ord('F'), ]
 	buf = send_receive(device, buf, 100)
 	if buf[1] == ord('A'):
-		return buf[2:-1]
+		return buf[2:-1].strip(b'\00').split(b'\r')
 
 # S -set date
 def set_date(device):
@@ -74,7 +81,6 @@ def get_number_of_records(device):
 def get_record(device, no=0):
 	num = [ord('G'), no>>8, no&0xff, ]
 	buf = send_receive(device, num, 200)
-	print(buf)
 	if buf[1] == ord('A'):
 		return buf[5:-1].decode().split('?')
 
@@ -94,7 +100,7 @@ with Serial(port='/dev/ttyUSB0', baudrate=int(19200), ) as device:
 	no = get_number_of_records(device)
 	print('get_number_of_records', no, )
 	for idx in range(no):
-		print('get_record', get_record(device, idx+1), )
+		print('get_record', get_record(device, idx), )
 	print('erase_records', erase_records(device), )
 	print('logout', logout(device), )
 
