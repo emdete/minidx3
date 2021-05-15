@@ -1,4 +1,4 @@
-# minidx3
+# MiniDX3
 
 Bought a minidx3 card reader. Pretty nice reader - cheap, tiny, and battery
 powered.
