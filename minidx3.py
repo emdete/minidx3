@@ -110,6 +110,7 @@ class MiniDX3(Serial): # pylint: disable=too-many-ancestors
 		no = [ord(c) for c in '{:04x}'.format(no)]
 		#no = [no >> 8, no & 0xff, ]
 		buf = [ord('G'), ] + no
+		buf = MiniDX3.__check_crc(buf)
 		return self.send_receive(buf, 200).decode() # .split('?')
 
 	# E - erase records
@@ -137,6 +138,6 @@ if __name__ == '__main__':
 		no = device.get_number_of_records()
 		print('get_number_of_records', no, )
 		for idx in range(no):
-			print('get_record', idx, device.get_record(idx), )
+			print('get_record', idx, repr(device.get_record(idx)), )
 		print('erase_records', device.erase_records(), )
 
