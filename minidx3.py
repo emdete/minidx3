@@ -70,8 +70,7 @@ def get_product_version(device):
 
 # S - set date
 def set_date(device):
-	date = datetime.now()
-	date = '2021051421056' #TODO
+	date = datetime.now().strftime('%Y%m%d%H%M%u')
 	buf = [ord(c) for c in date]
 	buf.insert(0, ord('S'))
 	return send_receive(device, buf)[1] == ord('A')
