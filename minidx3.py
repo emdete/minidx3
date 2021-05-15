@@ -49,18 +49,18 @@ class MiniDX3(Serial): # pylint: disable=too-many-ancestors
 	def login(self, pin='0000'):
 		buf = [ord(c) for c in pin]
 		buf.insert(0, ord('L'))
-		return self.send_receive(buf)
+		return self.send_receive(buf).decode()
 
 	# O - logout
 	def logout(self):
 		num = [ord('O'), ]
-		return self.send_receive(num)
+		return self.send_receive(num).decode()
 
 	# P - set password
 	def set_password(self, pin):
 		buf = [ord(c) for c in pin]
 		buf.insert(0, ord('P'))
-		return self.send_receive(buf)
+		return self.send_receive(buf).decode()
 
 	# B - get register
 	def get_register(self, no):
@@ -81,7 +81,7 @@ class MiniDX3(Serial): # pylint: disable=too-many-ancestors
 	def get_product_version(self):
 		buf = [ord('F'), ]
 		buf = self.send_receive(buf, 100)
-		buf = MiniDX3.__check_crc(buf) # unclean binary zeros, unclear =, crc?
+		buf = MiniDX3.__check_crc(buf) # crc included?
 		return buf.strip(b'\00').decode().split('\r')
 
 	# S - set date
@@ -89,7 +89,7 @@ class MiniDX3(Serial): # pylint: disable=too-many-ancestors
 		date = datetime.now().strftime('%Y%m%d%H%M%u')
 		buf = [ord(c) for c in date]
 		buf.insert(0, ord('S'))
-		return self.send_receive(buf)
+		return self.send_receive(buf).decode()
 
 	# T - get time and date
 	def get_date(self):
@@ -110,13 +110,19 @@ class MiniDX3(Serial): # pylint: disable=too-many-ancestors
 		no = [ord(c) for c in '{:04x}'.format(no)]
 		#no = [no >> 8, no & 0xff, ]
 		buf = [ord('G'), ] + no
-		buf = self.send_receive(buf, 200)
-		return buf.decode() # .split('?')
+		return self.send_receive(buf, 200).decode() # .split('?')
 
 	# E - erase records
 	def erase_records(self):
 		buf = [ord('E'), ]
-		return self.send_receive(buf)
+		return self.send_receive(buf).decode()
+
+	def __exit__(self, type_, value, tb):
+		try:
+			self.logout()
+		except:
+			pass
+		super().__exit__(self, type_, value, tb)
 
 if __name__ == '__main__':
 	with MiniDX3('/dev/ttyUSB0', '0000') as device:
@@ -133,5 +139,4 @@ if __name__ == '__main__':
 		for idx in range(no):
 			print('get_record', idx, device.get_record(idx), )
 		print('erase_records', device.erase_records(), )
-		print('logout', device.logout(), )
 
