@@ -65,7 +65,6 @@ class MiniDX3(Serial): # pylint: disable=too-many-ancestors
 	# B - get register
 	def get_register(self, no):
 		no = [ord(c) for c in '{:02x}'.format(no)]
-		#no = [no >> 8, no & 0xff, ]
 		buf = [ord('B'), ] + no
 		buf = self.send_receive(buf, 7)
 		buf = MiniDX3.__check_crc(buf)
